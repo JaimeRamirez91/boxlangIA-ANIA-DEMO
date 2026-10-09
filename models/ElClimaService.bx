@@ -1,5 +1,9 @@
 
+/**
+ * Servicio para obtener el clima actual de los países de Centroamérica utilizando OpenWeather.
+ */
 class {
+    
     /**
      * Obtiene la respuesta del clima actual para un país dado.
      *
@@ -7,22 +11,29 @@ class {
      * @return La respuesta del clima.
      */
     string function getWeatherIAResponse( required string country ) {
-        
+       
         moduleSettings = getModuleInfo( "bxai" ).settings;
 
-        weatherTool = aiTool(
-            "get_weather",                                // Tool name (used by AI)
-            "Obtener el clima actual para una ubicación, usando https://www.accuweather.com/es/sv/san-salvador/130669/weather-forecast.", // Description (AI reads this)
-            ( args ) => {                                 // Your function
-                // Call your weather API
-                return getWeatherData( args.location )
-            }
-        ).describeLocation( "Provee la informacion del clima para la ubicacion: #country#" );
+        weatherState = { data: {} };
 
-        answer = aiChat(
-            messages = "Como esta el clima en El salvador",
-            tools = [ weatherTool ],
-            params = moduleSettings.defaultParams,
+        weatherTool = aiTool(
+            "get_weather",
+            "Obtener datos actuales de OpenWeather para la capital de " & country,
+            ( required string location ) => {
+                weatherState.data = getWeatherData( location );
+                return weatherState.data;
+            }
+        ).describeLocation( "Nombre exacto del pais: " & country );
+
+        chatParams = duplicate( moduleSettings.defaultParams );
+        chatParams.tools = [ weatherTool ];
+
+       answer = aiChat(
+            messages = [
+                { role: "system", content: "Llama a get_weather antes de responder. Resume solo los datos devueltos en espanol, en texto plano y en un parrafo breve. Indica ciudad, temperatura en grados Celsius, humedad en porcentaje, viento en m/s y fuente OpenWeather. Son datos de la capital, no de todo el pais. No des informacion general del clima ni inventes pronosticos o alertas. Si falla la herramienta, indica que no hay datos disponibles." },
+                { role: "user", content: "Como esta el clima actual en " & country & "?" }
+            ],
+            params = chatParams,
             options = { apiKey: getSystemSetting( "API_KEY" ) },
             headers = {
                 "User-Agent": "boxlang-ia/1.0",
@@ -30,7 +41,38 @@ class {
             }
         );
 
+        if ( !weatherState.data.keyExists( "main" ) ) {
+            return "No se obtuvieron datos actuales del clima. Revisa la herramienta y WEATHER_API_KEY.";
+        }
+
         return answer;
+    }
+
+    /**
+     * Obtiene los datos actuales del clima para una ubicación dada utilizando OpenWeather.
+     *
+     * @param location El nombre de la ubicación.
+     * @return Un objeto con los datos del clima o un error.
+     */
+    struct function getWeatherData( required string location ) {
+        requestedLocation = arguments.location;
+        matches = getCountries().filter( item => item.name == requestedLocation || item.capital == requestedLocation );
+        if ( !matches.len() ) {
+            return { error: "Ubicacion no valida. Usa el nombre exacto del pais seleccionado." };
+        }
+        selectedCountry = matches[ 1 ];
+        response = http( "https://api.openweathermap.org/data/2.5/weather" )
+            .urlParam( "lat", selectedCountry.latitude )
+            .urlParam( "lon", selectedCountry.longitude )
+            .urlParam( "appid", trim( getSystemSetting( "WEATHER_API_KEY", "" ) ) )
+            .urlParam( "units", "metric" )
+            .urlParam( "lang", "es" )
+            .send();
+        if ( val( response.statusCode ) != 200 ) {
+            return { error: "OpenWeather no pudo devolver datos actuales.", status: val( response.statusCode ) };
+        }
+        weather = jsonDeserialize( response.fileContent );
+        return weather;
     }
 
     /**
