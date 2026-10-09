@@ -4,12 +4,13 @@
       "settings": {
         "provider": "openai-compatible",
         "defaultParams": {
-          "model": "glm-5.3-flash"
+          "model": "qwen3.7-plus"
         },
         "providers": {
           "OpenAICompatible": {
             "options": {
-              "baseURL": "https://opencode.ai/zen/go/v1"
+              "baseURL": "https://opencode.ai/zen/go/v1",
+              "toolCalling": true
             }
           }
         }

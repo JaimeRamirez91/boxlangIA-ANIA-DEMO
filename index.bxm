@@ -1,0 +1,59 @@
+<bx:script>
+// Imports
+import models.ElClimaService as ElClimaService;
+
+// Logic
+weatherService = new ElClimaService();
+countries = weatherService.getCountries();
+selectedCountry = countries[ 1 ];
+answer = "";
+errorMessage = "";
+submitted = isDefined( "form.country" );
+if ( submitted ) {
+    matches = countries.filter( country => isSimpleValue( form.country ) && country.name == form.country );
+    if ( matches.len() ) {
+        selectedCountry = matches[ 1 ];
+        answer = weatherService.getWeatherIAResponse( selectedCountry.name );
+    } else {
+        errorMessage = "Selecciona un pais de la lista.";
+    }
+}
+</bx:script>
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>El clima en Centroam&eacute;rica</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main>
+        <h1>El clima en Centroam&eacute;rica</h1>
+        <form method="post" action="index.bxm">
+            <label for="country">Pa&iacute;s</label>
+            <div class="controls">
+                <select id="country" name="country">
+                    <bx:loop array="#countries#" item="country">
+                        <bx:output><option value="#htmlEditFormat( country.name )#" <bx:if country.name == selectedCountry.name>selected</bx:if>>#htmlEditFormat( country.name )#</option></bx:output>
+                    </bx:loop>
+                </select>
+                <button type="submit"><i data-lucide="search" aria-hidden="true"></i>Consultar</button>
+            </div>
+        </form>
+        <bx:if len( errorMessage )><p class="error" role="alert"><bx:output>#htmlEditFormat( errorMessage )#</bx:output></p></bx:if>
+        <bx:if len( answer )><p class="answer"><bx:output>#htmlEditFormat( answer )#</bx:output></p></bx:if>
+    </main>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script>
+        if (window.lucide) lucide.createIcons();
+        document.querySelector('form').addEventListener('submit', () => {
+            document.querySelector('button').disabled = true;
+        });
+        window.addEventListener('pageshow', () => {
+            document.querySelector('button').disabled = false;
+        });
+    </script>
+</body>
+</html>

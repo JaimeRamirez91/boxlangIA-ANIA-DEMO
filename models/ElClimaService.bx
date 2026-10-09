@@ -1,0 +1,52 @@
+
+class {
+    /**
+     * Obtiene la respuesta del clima actual para un país dado.
+     *
+     * @param country El nombre del país.
+     * @return La respuesta del clima.
+     */
+    string function getWeatherIAResponse( required string country ) {
+        
+        moduleSettings = getModuleInfo( "bxai" ).settings;
+
+        weatherTool = aiTool(
+            "get_weather",                                // Tool name (used by AI)
+            "Obtener el clima actual para una ubicación, usando https://www.accuweather.com/es/sv/san-salvador/130669/weather-forecast.", // Description (AI reads this)
+            ( args ) => {                                 // Your function
+                // Call your weather API
+                return getWeatherData( args.location )
+            }
+        ).describeLocation( "Provee la informacion del clima para la ubicacion: #country#" );
+
+        answer = aiChat(
+            messages = "Como esta el clima en El salvador",
+            tools = [ weatherTool ],
+            params = moduleSettings.defaultParams,
+            options = { apiKey: getSystemSetting( "API_KEY" ) },
+            headers = {
+                "User-Agent": "boxlang-ia/1.0",
+                "x-opencode-session": createUUID()
+            }
+        );
+
+        return answer;
+    }
+
+    /**
+     * Obtiene la lista de países de Centroamérica con sus capitales y coordenadas.
+     *
+     * @return Un array de objetos que representan los países.
+     */
+    array function getCountries() {
+        return [
+            { name: "Guatemala", capital: "Ciudad de Guatemala", latitude: 14.6349, longitude: -90.5069 },
+            { name: "Belice", capital: "Belmopan", latitude: 17.2510, longitude: -88.7590 },
+            { name: "El Salvador", capital: "San Salvador", latitude: 13.6929, longitude: -89.2182 },
+            { name: "Honduras", capital: "Tegucigalpa", latitude: 14.0723, longitude: -87.1921 },
+            { name: "Nicaragua", capital: "Managua", latitude: 12.1364, longitude: -86.2514 },
+            { name: "Costa Rica", capital: "San Jose", latitude: 9.9281, longitude: -84.0907 },
+            { name: "Panama", capital: "Ciudad de Panama", latitude: 8.9824, longitude: -79.5199 }
+        ];
+    }
+}
