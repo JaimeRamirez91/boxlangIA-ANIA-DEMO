@@ -1,0 +1,2 @@
+answer = aiChat( "Say hello!" );
+println( answer );

@@ -1,0 +1,23 @@
+{
+  "modules": {
+    "bxai": {
+      "settings": {
+        "provider": "openai-compatible",
+        "defaultParams": {
+          "model": "google/gemma4-12b"
+        },
+        "providers": {
+          "OpenAICompatible": {
+            "options": {
+              "apiKey": "",
+              "baseURL": "http://localhost:1235/v1"
+            }
+          }
+        }
+      }
+    }
+  },
+  "modulesDirectory": [
+    "${user-dir}/lib/boxlang-modules"
+  ]
+}
