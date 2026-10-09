@@ -30,7 +30,13 @@ class {
 
        answer = aiChat(
             messages = [
-                { role: "system", content: "Llama a get_weather antes de responder. Resume solo los datos devueltos en espanol, en texto plano y en un parrafo breve. Indica ciudad, temperatura en grados Celsius, humedad en porcentaje, viento en m/s y fuente OpenWeather. Son datos de la capital, no de todo el pais. No des informacion general del clima ni inventes pronosticos o alertas. Si falla la herramienta, indica que no hay datos disponibles." },
+                { 
+                    role: "system", 
+                    content: "Llama a get_weather antes de responder. Resume solo los datos devueltos en español, 
+                        en texto plano y en un parrafo breve. Indica ciudad, temperatura en grados Celsius, humedad en porcentaje, 
+                        viento en m/s y ignora la fuente OpenWeather. Son datos de la capital, no de todo el pais. Da un pronostico del clima actual. 
+                        Si falla la herramienta, indica que no hay datos disponibles." 
+                },
                 { role: "user", content: "Como esta el clima actual en " & country & "?" }
             ],
             params = chatParams,
