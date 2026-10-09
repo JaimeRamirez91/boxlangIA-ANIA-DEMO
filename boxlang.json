@@ -4,13 +4,12 @@
       "settings": {
         "provider": "openai-compatible",
         "defaultParams": {
-          "model": "google/gemma4-12b"
+          "model": "glm-5.3-flash"
         },
         "providers": {
           "OpenAICompatible": {
             "options": {
-              "apiKey": "",
-              "baseURL": "http://localhost:1235/v1"
+              "baseURL": "https://opencode.ai/zen/go/v1"
             }
           }
         }

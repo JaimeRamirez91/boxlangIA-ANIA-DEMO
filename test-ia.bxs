@@ -1,2 +1,14 @@
-answer = aiChat( "Hola!" );
+
+moduleSettings = getModuleInfo( "bxai" ).settings;
+
+answer = aiChat(
+    messages = "Hola",
+    params = moduleSettings.defaultParams,
+    options = { apiKey: getSystemSetting( "API_KEY" ) },
+    headers = {
+        "User-Agent": "boxlang-ia/1.0",
+        "x-opencode-session": createUUID()
+    }
+);
+
 println( answer );

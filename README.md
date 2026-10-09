@@ -1,56 +1,66 @@
 # Ejemplo de IA con BoxLang
 
-Un ejemplo mínimo que envía `Say hello!` a un modelo local mediante el módulo `bx-ai` e imprime su respuesta.
+Este proyecto envía el mensaje `Hola` al modelo `glm-5.3-flash` de OpenCode Go mediante `aiChat()` e imprime la respuesta. Utiliza el protocolo compatible con OpenAI y el endpoint `/chat/completions`.
 
-## Requisitos previos
+## Requisitos
 
-- [BoxLang](https://boxlang.ortusbooks.com/) instalado, con el comando `boxlang` disponible en la terminal. Este proyecto está configurado para BoxLang 1.18.0.
-- [CommandBox](https://www.ortussolutions.com/products/commandbox) instalado si necesitas instalar las dependencias del proyecto.
-- [LM Studio Bionic](https://lmstudio.ai/) instalado con un modelo de chat descargado. Puedes descargar la aplicación desde el sitio oficial. Este ejemplo está configurado para `google/gemma4-12b`.
+- [BoxLang](https://boxlang.ortusbooks.com/) instalado y disponible mediante el comando `boxlang`. En [box.json](box.json) se declara BoxLang 1.18.0.
+- [CommandBox](https://www.ortussolutions.com/products/commandbox) para instalar las dependencias si todavía no están disponibles.
+- Una clave válida de [OpenCode Go](https://opencode.ai/docs/go/) con acceso al modelo seleccionado.
 
-## 1. Instalar las dependencias
+No necesitas iniciar Ollama, LM Studio ni un servidor local: las solicitudes se envían a OpenCode Go.
 
-Abre una terminal en la raíz del proyecto, donde se encuentra [box.json](box.json):
+## Instalar las dependencias
+
+Desde la raíz del proyecto:
 
 ```sh
 box install
 ```
 
-Este comando instala la dependencia declarada `bx-ai` en `lib/boxlang-modules/bx-ai`. Omite este paso si el módulo ya está instalado.
+[box.json](box.json) declara `bx-ai` versión `3.5.0+19` y su instalación en `lib/boxlang-modules/bx-ai`. Omite este paso si la dependencia ya está instalada.
 
-## 2. Iniciar Bionic
+## Configurar la clave
 
-Referencias oficiales: [documentación de Bionic](https://lmstudio.ai/docs/bionic) y [configuración del servidor de API local](https://lmstudio.ai/docs/developer/core/server).
+Define `OPENAI_API_KEY` en el entorno del proceso o en un archivo `.env` en la raíz del proyecto:
 
-En Bionic:
-
-1. Descarga y carga el modelo que quieras utilizar.
-2. Abre la sección Developer y configura el servidor de API para usar el puerto `1235`.
-3. Inicia el servidor.
-
-
-Verifica que el servidor responda:
-
-```sh
-http://localhost:1235/v1/models
+```dotenv
+OPENAI_API_KEY=tu_clave_de_opencode_go
 ```
 
-La respuesta debe ser un JSON con los modelos disponibles. Comprueba que el `id` del modelo coincida con el valor de la configuración indicada a continuación.
+Aunque la variable se llama `OPENAI_API_KEY`, su valor debe ser una clave de **OpenCode Go**, no de OpenAI. El script la lee con `getSystemSetting( "OPENAI_API_KEY" )` y la pasa explícitamente en `options.apiKey`.
 
-## 3. Revisar la configuración
+No publiques la clave ni añadas el archivo `.env` al repositorio. Si una clave queda expuesta, revócala y genera otra.
 
-El archivo [boxlang.json](boxlang.json) contiene la siguiente configuración:
+## Configuración del modelo
 
-- `modules.bxai.settings.provider`: `openai-compatible`.
-- `modules.bxai.settings.defaultParams.model`: `google/gemma4-12b`. Sustitúyelo por el ID exacto de tu modelo si es necesario.
-- `modules.bxai.settings.providers.OpenAICompatible.options.baseURL`: `http://localhost:1235/v1`. Cámbialo si tu servidor usa otro puerto.
-- `modulesDirectory`: el directorio `lib/boxlang-modules` del proyecto.
+[boxlang.json](boxlang.json) define:
 
-Los nombres `openai-compatible` y `OpenAICompatible` son diferentes intencionalmente: el primero selecciona el proveedor y el segundo es el nombre del servicio que se utiliza para buscar su configuración. No sustituyas ninguno por `local`. Aunque el modelo se ejecute localmente en Bionic, utiliza el formato de API compatible con OpenAI.
+| Opción | Valor actual |
+| --- | --- |
+| `modules.bxai.settings.provider` | `openai-compatible` |
+| `modules.bxai.settings.defaultParams.model` | `glm-5.3-flash` |
+| `modules.bxai.settings.providers.OpenAICompatible.options.baseURL` | `https://opencode.ai/zen/go/v1` |
+| `modulesDirectory` | `[ "${user-dir}/lib/boxlang-modules" ]` |
 
-El valor vacío de `apiKey` es adecuado para un servidor local con la autenticación desactivada. No necesitas una cuenta de OpenAI.
+El adaptador añade `/chat/completions` a la URL base. La URL final es `https://opencode.ai/zen/go/v1/chat/completions`.
 
-## 4. Ejecutar el ejemplo
+`openai-compatible` selecciona el proveedor; `OpenAICompatible` identifica la configuración de ese servicio. Para cambiar de modelo, edita `defaultParams.model` y comprueba que el nuevo modelo admita el mismo protocolo en los [endpoints de OpenCode Go](https://opencode.ai/docs/go/#endpoints).
+
+## Funcionamiento del script
+
+[test-ia.bxs](test-ia.bxs) realiza los siguientes pasos:
+
+1. Obtiene la configuración cargada con `getModuleInfo( "bxai" ).settings`.
+2. Llama a `aiChat()` con el mensaje `Hola` y `params = moduleSettings.defaultParams`. Pasar estos parámetros explícitamente evita que los valores predeterminados del adaptador sustituyan al modelo configurado.
+3. Proporciona la clave mediante `options.apiKey` y las cabeceras `User-Agent: boxlang-ia/1.0` y `x-opencode-session`.
+4. Imprime la respuesta con `println( answer )`.
+
+El proveedor y la URL se toman de la configuración; el script no necesita crear un servicio con `aiService()` ni llamar a `setChatURL()`.
+
+El identificador de sesión se genera con `createUUID()` para esta solicitud. En una conversación con varias solicitudes, reutiliza el mismo identificador. OpenCode Go está orientado a agentes de programación; consulta sus [requisitos para clientes externos](https://opencode.ai/docs/go/#where-can-i-use-it).
+
+## Ejecutar
 
 Desde la raíz del proyecto:
 
@@ -58,17 +68,18 @@ Desde la raíz del proyecto:
 boxlang --bx-config ./boxlang.json test-ia.bxs
 ```
 
-[test-ia.bxs](test-ia.bxs) llama a `aiChat( "Say hello!" )` e imprime la respuesta. Una ejecución correcta produce un texto similar a:
+Una respuesta de ejemplo es:
 
 ```text
-Hello! How can I help you today?
+¡Hola! ¿Cómo estás? ¿En qué puedo ayudarte hoy?
 ```
 
-La respuesta puede variar entre ejecuciones. Edita el mensaje del script para probar otra instrucción.
+La respuesta puede variar. Modifica `messages` en el script para cambiar la consulta.
 
 ## Solución de problemas
 
-- **`Failed to parse JSON Connection Failure`**: comprueba que el servidor de API de Bionic esté iniciado, que el puerto coincida con la configuración y que la consulta a `/v1/models` responda correctamente. Verifica también que la clave de opciones del proveedor sea `OpenAICompatible`; de lo contrario, no se aplica la URL configurada.
-- **`Provider [local] is not supported`**: establece `settings.provider` en `openai-compatible`.
-- **Modelo no encontrado**: utiliza el ID exacto devuelto por `/v1/models` y asegúrate de que el modelo esté disponible en Bionic.
-- **No se encuentra `aiChat`**: ejecuta `box install` y después ejecuta el script desde la raíz del proyecto con `--bx-config ./boxlang.json`.
+- **HTTP 404**: verifica el proveedor y la URL base. El adaptador `ollama` añade `/api/chat`, una ruta que no corresponde a esta API de OpenCode Go.
+- **`Invalid API key`**: comprueba que `OPENAI_API_KEY` contenga una clave válida de OpenCode Go y que se pase mediante `options.apiKey`. La configuración actual no almacena la clave en el JSON.
+- **`ModelProtocolUnsupported`**: confirma que el modelo admita `/chat/completions`. Los modelos que requieren `/messages` o `/responses` necesitan otro adaptador o implementación; cambiar solo el nombre del modelo no basta.
+- **Modelo incorrecto o no disponible**: conserva `params = moduleSettings.defaultParams`, verifica el ID en `https://opencode.ai/zen/go/v1/models` y comprueba su disponibilidad en el servicio.
+- **No se encuentra `aiChat`**: instala las dependencias con `box install` y ejecuta desde la raíz del proyecto usando `--bx-config ./boxlang.json`.
