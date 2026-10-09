@@ -1,2 +1,2 @@
-answer = aiChat( "Say hello!" );
+answer = aiChat( "Hola puedes ayudarme?" );
 println( answer );
