@@ -84,7 +84,7 @@ class {
         return [
             { name: "Guatemala", capital: "Ciudad de Guatemala", latitude: 14.6349, longitude: -90.5069 },
             { name: "Belice", capital: "Belmopan", latitude: 17.2510, longitude: -88.7590 },
-            { name: "El Salvador", capital: "San Salvador", latitude: 13.6929, longitude: -89.2182 },
+            { name: "El Salvador", capital: "San Salvador", latitude: 13.6894, longitude: -89.1872 },
             { name: "Honduras", capital: "Tegucigalpa", latitude: 14.0723, longitude: -87.1921 },
             { name: "Nicaragua", capital: "Managua", latitude: 12.1364, longitude: -86.2514 },
             { name: "Costa Rica", capital: "San Jose", latitude: 9.9281, longitude: -84.0907 },
