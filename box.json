@@ -1,11 +1,6 @@
 {
     "version":"1.0.0",
     "name":"MyBoxlangApp",
-    "app":{
-        "serverHomeDirectory":".engine/boxlang",
-        "cfengine":"boxlang@1.18.0",
-        "engineConfigFile":"./boxlang.json"
-    },
     "dependencies":{
         "bx-ai":"3.5.0+19"
     },
