@@ -2,6 +2,8 @@
 
 Un ejemplo mínimo que envía `Say hello!` a un modelo local mediante el módulo `bx-ai` e imprime su respuesta.
 
+## Boxlang IA docs: `https://ai.ortusbooks.com/`
+
 ## Requisitos previos
 
 - [BoxLang](https://boxlang.ortusbooks.com/) instalado, con el comando `boxlang` disponible en la terminal. Este proyecto está configurado para BoxLang 1.18.0.
