@@ -2,7 +2,7 @@
 
 Un ejemplo mínimo que envía `Say hello!` a un modelo local mediante el módulo `bx-ai` e imprime su respuesta.
 
-## Boxlang IA docs: `https://ai.ortusbooks.com/`
+## Boxlang IA docs: `https://ai.ortusbooks.com/` `https://ai.boxlang.io/explorer/`
 
 ## Requisitos previos
 
