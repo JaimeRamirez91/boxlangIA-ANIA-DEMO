@@ -1,0 +1,99 @@
+/**
+ * Servicio para obtener el clima actual de los países de Centroamérica utilizando OpenWeather.
+ */
+class {
+    
+    /**
+     * Obtiene la respuesta del clima actual para un país dado.
+     *
+     * @param country El nombre del país.
+     * @return La respuesta del clima.
+     */
+    string function getWeatherIAResponse( required string country ) {
+       
+        moduleSettings = getModuleInfo( "bxai" ).settings;
+
+        weatherState = { data: {} };
+
+        weatherTool = aiTool(
+            "get_weather",
+            "Obtener datos actuales de OpenWeather para la capital de " & country,
+            ( required string location ) => {
+                weatherState.data = getWeatherData( location );
+                return weatherState.data;
+            }
+        ).describeLocation( "Nombre exacto del pais: " & country );
+
+        chatParams = duplicate( moduleSettings.defaultParams );
+        chatParams.tools = [ weatherTool ];
+
+       answer = aiChat(
+            messages = [
+                { 
+                    role: "system", 
+                    content: "Llama a get_weather antes de responder. Resume solo los datos devueltos en español, 
+                        en texto plano y en un parrafo breve. Indica ciudad, temperatura en grados Celsius, humedad en porcentaje, 
+                        viento en m/s y ignora la fuente OpenWeather. Son datos de la capital, no de todo el pais. Da un pronostico del clima actual. 
+                        Si falla la herramienta, indica que no hay datos disponibles." 
+                },
+                { role: "user", content: "Como esta el clima actual en " & country & "?" }
+            ],
+            params = chatParams,
+            options = { apiKey: getSystemSetting( "API_KEY" ) },
+            headers = {
+                "User-Agent": "boxlang-ia/1.0",
+                "x-opencode-session": createUUID()
+            }
+        );
+
+        if ( !weatherState.data.keyExists( "main" ) ) {
+            return "No se obtuvieron datos actuales del clima. Revisa la herramienta y WEATHER_API_KEY.";
+        }
+
+        return answer;
+    }
+
+    /**
+     * Obtiene los datos actuales del clima para una ubicación dada utilizando OpenWeather.
+     *
+     * @param location El nombre de la ubicación.
+     * @return Un objeto con los datos del clima o un error.
+     */
+    struct function getWeatherData( required string location ) {
+        requestedLocation = arguments.location;
+        matches = getCountries().filter( item => item.name == requestedLocation || item.capital == requestedLocation );
+        if ( !matches.len() ) {
+            return { error: "Ubicacion no valida. Usa el nombre exacto del pais seleccionado." };
+        }
+        selectedCountry = matches[ 1 ];
+        response = http( "https://api.openweathermap.org/data/2.5/weather" )
+            .urlParam( "lat", selectedCountry.latitude )
+            .urlParam( "lon", selectedCountry.longitude )
+            .urlParam( "appid", trim( getSystemSetting( "WEATHER_API_KEY", "" ) ) )
+            .urlParam( "units", "metric" )
+            .urlParam( "lang", "es" )
+            .send();
+        if ( val( response.statusCode ) != 200 ) {
+            return { error: "OpenWeather no pudo devolver datos actuales.", status: val( response.statusCode ) };
+        }
+        weather = jsonDeserialize( response.fileContent );
+        return weather;
+    }
+
+    /**
+     * Obtiene la lista de países de Centroamérica con sus capitales y coordenadas.
+     *
+     * @return Un array de objetos que representan los países.
+     */
+    array function getCountries() {
+        return [
+            { name: "Guatemala", capital: "Ciudad de Guatemala", latitude: 14.6349, longitude: -90.5069 },
+            { name: "Belice", capital: "Belmopan", latitude: 17.2510, longitude: -88.7590 },
+            { name: "El Salvador", capital: "San Salvador", latitude: 13.6894, longitude: -89.1872 },
+            { name: "Honduras", capital: "Tegucigalpa", latitude: 14.0723, longitude: -87.1921 },
+            { name: "Nicaragua", capital: "Managua", latitude: 12.1364, longitude: -86.2514 },
+            { name: "Costa Rica", capital: "San Jose", latitude: 9.9281, longitude: -84.0907 },
+            { name: "Panama", capital: "Ciudad de Panama", latitude: 8.9824, longitude: -79.5199 }
+        ];
+    }
+}

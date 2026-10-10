@@ -1,3 +1,4 @@
 .env
 lib/boxlang-modules/*
 !lib/boxlang-modules/.gitkeep
+.engine/**
